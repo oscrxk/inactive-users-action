@@ -57,7 +57,7 @@ async function run() {
   console.log(`User Activity Report Generated: ${file}`);
 
   // Expose the output csv file
-  core.setOutput('report_csv', file);
+  core.exportVariable('report_csv', file);
 }
 
 async function execute() {
@@ -78,7 +78,7 @@ function saveIntermediateData(directory, data) {
   try {
     const file = path.join(directory, 'organization_user_activity.json');
     fs.writeFileSync(file, JSON.stringify(data));
-    core.setOutput('report_json', file);
+    core.exportVariable('report_json', file);
   } catch (err) {
     console.error(`Failed to save intermediate data: ${err}`);
   }
