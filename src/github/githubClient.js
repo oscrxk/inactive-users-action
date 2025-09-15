@@ -1,17 +1,16 @@
-const {throttling} = require('@octokit/plugin-throttling')
-  , {retry} = require('@octokit/plugin-retry')
-  , {Octokit} = require('@octokit/rest')
-;
+const { throttling } = require('@octokit/plugin-throttling'),
+      { retry } = require('@octokit/plugin-retry'),
+      { Octokit } = require('@octokit/rest');
 
 const RetryThrottlingOctokit = Octokit.plugin(throttling, retry);
 
-//TODO could apply the API endpoint (i.e. support GHES)
+// Permite configurar baseUrl para GitHub Enterprise Server (GHES)
+module.exports.create = (token, maxRetries, baseUrl) => {
+  const MAX_RETRIES = maxRetries || 3;
 
-module.exports.create = (token, maxRetries) => {
-  const MAX_RETRIES = maxRetries ? maxRetries : 3
-
-  const octokit =new RetryThrottlingOctokit({
+  const octokit = new RetryThrottlingOctokit({
     auth: `token ${token}`,
+    baseUrl: baseUrl || 'https://api.github.com', // Usa GitHub público por defecto
 
     throttle: {
       onRateLimit: (retryAfter, options) => {
@@ -25,17 +24,11 @@ module.exports.create = (token, maxRetries) => {
       },
 
       onAbuseLimit: (retryAfter, options) => {
-        octokit.log.warn(`Abuse detection triggered request ${options.method} ${options.url}`);
-        // Prevent any further activity as abuse trigger has very long periods to come back from
+        octokit.log.warn(`Abuse detection triggered for request ${options.method} ${options.url}`);
         return false;
-        // if (options.request.retryCount < MAX_RETRIES) {
-        //   octokit.log.warn(`Retrying after ${retryAfter} seconds`);
-        //   return true;
-        // }
       }
     }
   });
 
   return octokit;
 }
-
