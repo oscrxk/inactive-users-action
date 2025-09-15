@@ -9683,20 +9683,19 @@ module.exports = class CommitActivity {
 
       return result;
     })
-      .catch(err => {
-        if (err.status === 404) {
-          //TODO could log this out
-          return {};
-        } else if (err.status === 409) {
-          if (err.message.toLowerCase().startsWith('git repository is empty')) {
-            return {};
-          } else {
-            throw err;
-          }
-        } else {
-          throw err;
-        }
-      })
+    .catch(err => {
+      // Manejar casos de repositorio vacío o no encontrado silenciosamente
+      if (err.status === 404 || // Repo no existe
+          err.status === 409 || // Repo vacío
+          (err.message && err.message.toLowerCase().includes('git repository is empty'))) {
+        console.log(`Skipping empty or not found repository: ${repoFullName}`);
+        const result = {};
+        result[repoFullName] = {};
+        return result;
+      }
+      // Para otros errores, lanzarlos para que sean manejados en niveles superiores
+      throw err;
+    });
   }
 
   get octokit() {
